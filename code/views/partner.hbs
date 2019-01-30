@@ -1,0 +1,347 @@
+{{> header title="Partner Dashboard" }}
+
+<body class="text-center">
+  
+  {{> nav }}
+  
+  <div class="container mt-3">
+    <div class="row">
+      
+      <div class="col-xl-10 offset-xl-1 col-md-12 col-sm-12 text-left">
+  
+        {{> flash }}
+
+        <h1 class="h3 text-center mt-3 mb-3">{{partner.title}}'s Referral Dashboard</h1>
+      
+        <div class="mb-4">
+          <div class="row text-center">
+            <div class="col-sm-12 mt-2">
+              <div class="btn-group btn-group-toggle mb-2" data-toggle="buttons" id="yaxis-group">
+                <label class="btn btn-secondary active" style="font-size: 0.9rem">
+                  <input type="radio" name="yaxis" id="byRevenue" autocomplete="off" checked> Monthly Revenue
+                </label>
+                <label class="btn btn-secondary" style="font-size: 0.9rem">
+                  <input type="radio" name="yaxis" id="byPaying" autocomplete="off"> Paying Users
+                </label>
+                <label class="btn btn-secondary" style="font-size: 0.9rem">
+                  <input type="radio" name="yaxis" id="byTrial" autocomplete="off"> Trial Users
+                </label>
+              </div>
+              <canvas id="campaignsChart" width="400" height="160"></canvas>
+            </div>
+          </div>
+        </div>
+      
+        <div class="confirmed-panel mb-4 mt-2">
+          <div class="row text-center">
+            <div class="col-sm-12 mt-2">
+              <h1 class="h4 mb-3 text-left"><strong>Current Summary</strong></h1>
+            </div>
+            <div class="offset-lg-1 col-lg-2 col-sm-6 mt-2 text-nowrap">
+              Trial Users
+              <h1 class="h2 mb-0 mt-2">{{current.summary.trial}}</h1>
+            </div>
+            <div class="col-lg-2 col-sm-6 mt-2 text-nowrap">
+              Paying Users
+              <h1 class="h2 mb-0 mt-2">{{current.summary.paying}}</h1>
+            </div>
+            <div class="col-lg-2 col-sm-6 mt-2 text-nowrap">
+              Revenue*
+              <h1 class="h2 mb-0 mt-2">${{current.summary.revenue}}</h1>
+            </div>
+            <div class="col-lg-2 col-sm-6 mt-2 text-nowrap">
+              Minus Apple
+              <h1 class="h2 mb-0 mt-2">${{current.summary.revenueMinusApple}}</h1>
+            </div>
+            <div class="col-lg-2 col-sm-12 mt-2 text-nowrap">
+              Your Share
+              <h1 class="h2 mb-0 mt-2">${{current.summary.revenueYourShare}}</h1>
+            </div>
+          </div>
+        </div>
+      
+        {{#each current.campaigns}}
+          <div class="confirmed-panel mb-4">
+            <div class="row text-left">
+              <div class="col-sm-12 mt-2">
+                {{#if @key}}
+                  <h1 class="h4 mb-3"><strong><span style="color: #bbb">Campaign </span>{{@key}}</strong></h1>
+                {{else}}
+                  <h1 class="h4 mb-3"><strong>No Campaign Specified</strong></h1>
+                {{/if}}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-12">
+                <table style="width: 100%; text-align:center;">
+                  <tr>
+                    <td style="width: 15%"></td>
+                    <td style="width: 11%">Trial</td>
+                    <td style="width: 11%">Paying</td>
+                    <td style="width: 21%">Revenue*</td>
+                    <td style="width: 21%">Minus Apple</td>
+                    <td style="width: 21%">Your Share</td>
+                  </tr>
+                  {{#each this}}
+                    <tr>
+                      <td>{{@key}}</td>
+                      <td>{{this.trial.length}}</td>
+                      <td>{{this.paying.length}}</td>
+                      <td>${{this.revenue}}</td>
+                      <td>${{this.revenueMinusApple}}</td>
+                      <td>${{this.revenueYourShare}}</td>
+                    </tr>
+                  {{/each}}
+                </table>
+              </div>
+            </div>
+          </div>
+        {{/each}}
+      <div class="confirmed-panel mt-3 mb-2">
+        <div class="row text-center">
+          <div class="col-sm-12 mt-2">
+            <h1 class="h4 mb-3 text-left"><strong>{{partner.title}}'s Account</strong></h1>
+            <h1 class="h5 mb-3 text-left">Your partner code is <strong>{{partner.code}}-[Campaign ID]</strong></h1>
+            <p class="mb-1 text-left">To refer users, replace [Campaign ID] with an alphanumeric string, for example, {{current.partnerCode}}-copy1. Campaigns allow you to group user signups to easily do A/B tests. Campaigns are automatically created when you use a new campaign ID.</p>
+            <p class="mb-4 text-left">Your revenue share is <strong>{{partner.percentageShare}}%</strong> after Apple's share. Payouts are made on the 1st of each month.</p>
+            <a href="/change-password" class="btn-primary btn" style="width: 180px;">Change Password</a>
+            <a href="mailto:admin@{{DOMAIN}}" class="btn-primary btn" style="width: 180px;">Get Help</a>
+          </div>
+        </div>
+      </div>
+      <p style="font-size: 12px;" class="mb-5">*Revenue is estimated based on active subscriptions and can change based on cancellations, failed payments, currency differences, etc.</p>
+      
+      </div>
+    </div>
+  </div>
+  
+  {{> footer}}
+
+  {{> bootstrapjs}}
+  
+  <script src="/js/randomColor.js"></script>
+  <script src="/js/moment.min.js"></script>
+  <script src="/js/Chart.min.js"></script>
+  
+  <script>
+
+    // Colors Utilities/Code
+    const cycleColors = ["rgb(144, 201, 239)","rgb(255, 212, 110)",  "rgb(169, 219, 201)", "rgb(155, 89, 182)", "rgb(44, 62, 80)", "rgb(149, 165, 166)", "rgb(192, 57, 43)"];
+    function shadeRGBColor(color, percent) {
+        var f=color.split(","),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=parseInt(f[0].slice(4)),G=parseInt(f[1]),B=parseInt(f[2]);
+        return "rgb("+(Math.round((t-R)*p)+R)+","+(Math.round((t-G)*p)+G)+","+(Math.round((t-B)*p)+B)+")";
+    }
+    
+    var yAxisMode = "revenue";
+    
+    $('#yaxis-group').change(function (e) {
+      if ($('#byRevenue').is(':checked')) {
+        yAxisMode = "revenue";
+        reloadChart();
+      }
+      else if ($('#byPaying').is(':checked')) {
+        yAxisMode = "paying";
+        reloadChart();
+      }
+      else if ($('#byTrial').is(':checked')) {
+        yAxisMode = "trial";
+        reloadChart();
+      }
+    });
+    
+    var snapshots = {{{ snapshotsJson }}};
+    var current = {{{ currentJson }}};
+    snapshots.push(current);
+
+    var dates = [];
+    for (snapshotIndex in snapshots) {
+      dates.push(moment(snapshots[snapshotIndex].createDate));
+    }
+    
+    var ctx = document.getElementById("campaignsChart").getContext('2d');
+    var campaignsChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: dates
+      }
+    });
+    
+    reloadChart();
+    
+    function constructOptions() {
+      var options = 
+      {
+//         onClick: function(evt) {
+//           var item = campaignsChart.getElementAtEvent(evt);
+//           if (item.length) {
+//             // TODO: update page data with past data
+//             alert(item[0]._index + " " + campaignsChart.data.datasets[item[0]._index]);
+//           }
+//         },
+        responsive: true,
+				title: {
+					display: false,
+				},
+				tooltips: {
+          position: 'nearest',
+					mode: 'index',
+          bodySpacing: 5,
+          titleMarginBottom: 8,
+          xPadding: 12,
+          yPadding: 7,
+          callbacks: {}
+				},
+				hover: {
+					mode: 'index'
+				},
+				scales: {
+					xAxes: [{
+						scaleLabel: {
+							display: false
+						},
+            ticks: {
+              callback: function(value, index, values) {
+                if (value.format("D") == "1" || index == 0) {
+                  return [ value.format("D"), value.format("MMMM") ];
+                }
+                else {
+                  return value.format("D");
+                }
+              }
+            },
+					}],
+					yAxes: [{
+            ticks: {
+              beginAtZero: true,
+              min: 0,
+              precision: 0
+            },
+						stacked: true,
+						scaleLabel: {
+							display: true,
+              labelString: (function(){ return "abc" })
+						}
+					}]
+				}
+      }
+      
+      if (yAxisMode == "revenue") {
+        options.tooltips.callbacks.title = (item, data) => {
+          var revenueString = "Monthly Revenue: $" + snapshots[item[0].index].summary.revenue;
+          var minusAppleString = "Minus Apple: $" + snapshots[item[0].index].summary.revenueMinusApple;
+          var yourShareString = "Your Share: $" + snapshots[item[0].index].summary.revenueYourShare;
+          return [dates[item[0].index].format("MMMM Do, YYYY"), "", revenueString, minusAppleString, yourShareString];
+        }
+        options.tooltips.callbacks.label = (item, data) => {
+          return " $" + item.yLabel.toFixed(2) + " " + campaignsChart.data.datasets[item.datasetIndex].label;
+        }
+        options.scales.yAxes[0].ticks.callback = (value, index, values) => {
+          return '$' + value;
+        }
+        options.scales.yAxes[0].scaleLabel.labelString = "Monthly Revenue";
+      }
+      else {
+        options.tooltips.callbacks.title = (item, data) => {
+          return dates[item[0].index].format("MMMM Do, YYYY");
+        }
+        options.tooltips.callbacks.label = (item, data) => {
+          return " " + item.yLabel + " " + campaignsChart.data.datasets[item.datasetIndex].label;
+        }
+        options.scales.yAxes[0].ticks.callback = (value, index, values) => {
+          return value;
+        }
+        if (yAxisMode == "paying") {
+          options.scales.yAxes[0].scaleLabel.labelString = "# Paying Subscriptions";
+        }
+        else if (yAxisMode == "trial") {
+          options.scales.yAxes[0].scaleLabel.labelString = "# Trial Subscriptions";
+        }
+      }
+      
+      return options;
+    }
+    
+    function reloadChart() {
+      campaignsChart.data.datasets = constructDatasets();
+      campaignsChart.options = constructOptions();
+      campaignsChart.update();
+    }
+    
+    function constructCampaigns() {
+      // find all campaign names
+      var campaignsData = {};
+      for (snapshotIndex in snapshots) {
+        for (campaignName in snapshots[snapshotIndex].campaigns) {
+          if (!(campaignName in campaignsData)) {
+            campaignsData[campaignName] = [];
+          }
+        }
+      }
+      // Iterate through each snapshot day and push campaigns into campaignsData
+      for (snapshotIndex in snapshots) {
+        var unusedCampaigns = new Set(Object.keys(campaignsData));
+        for (campaignName in snapshots[snapshotIndex].campaigns) {
+          var campaign = snapshots[snapshotIndex].campaigns[campaignName];
+          campaignsData[campaignName].push(campaign);
+          unusedCampaigns.delete(campaignName);
+        }
+        // add an empty data point to missing campaigns on this day
+        for (let unusedCampaign of unusedCampaigns) {
+          campaignsData[unusedCampaign].push({
+            "Total": {
+              "trial": {
+                length: 0
+              },
+              "paying": {
+                length: 0
+              },
+              revenue: 0,
+              revenueMinusApple: 0,
+              revenueYourShare: 0
+            }
+          });
+        };
+      }
+      if (campaignsData[""]) {
+        campaignsData["(no campaign)"] = campaignsData[""];
+        delete campaignsData[""];
+      }
+      return campaignsData;
+    }
+    
+    function constructDatasets() {
+      // create datasets for each campaign over time
+      var campaignsData = constructCampaigns();
+      var datasets = [];
+      var colorIndex = 0;
+      for (campaignName in campaignsData) {
+        var campaignArray = campaignsData[campaignName];
+        var data = [];
+        for (index in campaignArray) {
+          if (yAxisMode == "revenue") {
+            data.push(campaignArray[index]["Total"].revenue);
+          }
+          else if (yAxisMode == "paying") {
+            data.push(campaignArray[index]["Total"]["paying"].length);
+          }
+          else {
+            data.push(campaignArray[index]["Total"]["trial"].length);
+          }
+        }
+        datasets.push({
+          label: campaignName,
+          data: data,
+          backgroundColor: shadeRGBColor(cycleColors[colorIndex % cycleColors.length], 0.2),
+          borderColor: shadeRGBColor(cycleColors[colorIndex % cycleColors.length], -0.2),
+          pointRadius: 4,
+          pointHitRadius: 8,
+          borderWidth: 2 
+        });
+        colorIndex = colorIndex + 1;
+      }
+      return datasets;
+    }
+
+  </script>
+    
+</body>
